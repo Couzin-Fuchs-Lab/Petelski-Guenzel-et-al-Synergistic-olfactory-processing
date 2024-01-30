@@ -1,8 +1,11 @@
 %% ConfocalAnalysis_StaticResponse
-% ...
+% This script analyses how stable repeated responses to the same stimulus 
+% are. For this, we project each stimulus repetition's intensity projection 
+% into PCA space and measure the distance within and across stimuli to 
+% asses their potential differences.
 %
 % Version:
-% 28-July-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -11,13 +14,13 @@ warning('off')
 % Add toolboxes
 % A MATLAB toolbox for exporting publication quality figures
 % (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+addpath(genpath('C:\Users\Yannick\Documents\GitHub\export_fig'))
 mkdir('ConfocalAnalysis_StaticResponse')
 
 %% Settings
 
 % Give paths to find the data
-SET.basepath = '...\Data\Physiology\Cal520_Confocal\static_response\';
+SET.basepath = '...';
 SET.layers = {'layer01_top'; 'layer02_middle'};
 
 % Give stimulus names
@@ -28,6 +31,15 @@ SET.exp = 95;
 
 % Set framerate
 SET.fps = 1;
+% Set the number of frames the final trace should have
+SET.totalFrameNumber = 17;
+SET.time_vec = 0:(1/SET.fps):((SET.totalFrameNumber/SET.fps)-(1/SET.fps));
+% Set the analysis window. Note this is hard-coded previous knowledge for
+% data that has been cut.
+SET.AnalysisWindow = [...
+    10 11;... layer 01
+    8 9;...   layer 02
+    ];
 
 % Colormap for heatmaps
 SET.HeatmapColors = Confocal_SubFcn.ColMapPlasma(1000);
@@ -79,8 +91,11 @@ for iLayer = 1:length(SET.layers)
                     % Load the data
                     curr.stim = meta.unique_stim{ind_stim(jStim)};
                     curr.data = load([curr.dir.animal, '03_Data_Processed\', curr.stim, '.mat']);
+                    % Get time vector to cut data
+                    time_vec = meta.baseline(1):(meta.baseline(1)+SET.totalFrameNumber-1);
+                    curr.data.ImageStream.(curr.stim) = curr.data.ImageStream.(curr.stim)(:,:,time_vec);
                     % Get avg and std intensity projection
-                    avg_projection = nanmean(curr.data.ImageStream.(curr.stim)(:,:,meta.activeRegion),3);
+                    avg_projection = nanmean(curr.data.ImageStream.(curr.stim)(:,:,SET.AnalysisWindow(iLayer,1):SET.AnalysisWindow(iLayer,2)),3);
                     std_projection = nanstd(curr.data.ImageStream.(curr.stim),[],3);
                     % Pool based on segmentation
                     pocket_list = unique(Segmentation.pockets_labeled(:));
@@ -197,10 +212,9 @@ for iLayer = 1:length(SET.layers)
             PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).PCA.dist_across_avg = dist_across_avg;
             PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).PCA.dist_across_std = dist_across_std;
 
-
             %% Plot heatmaps
             hFig = figure('Units','normalized','Position',[0 0 1 1],'Color','w');
-            
+
             % Average projection
             % ----- Plot the grand mean across everything
             ax = subplot(2,5,1);
@@ -224,8 +238,7 @@ for iLayer = 1:length(SET.layers)
             axis equal tight off
             clim([min(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).avg_RGB(:)), max(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).avg_RGB(:))])
             title('RGB overlay')
-           
-            
+
             % SD projection
             % ----- Plot the grand mean across everything
             ax = subplot(2,5,6);
@@ -253,7 +266,6 @@ for iLayer = 1:length(SET.layers)
             export_fig([curr.dir.animal, '04_Data_Summary\static_heatmap'], '-pdf', '-painters')
             close(hFig)
 
-
             %% Plot all heatmaps
             hFig = figure('Units','normalized','Position',[0 0 1 1],'Color','w');
             % Get the maximum number of reps
@@ -266,7 +278,7 @@ for iLayer = 1:length(SET.layers)
             clim_all = [];
             for iStim = 1:length(SET.stim_list)
                 for iRep = 1:size(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).avg_projection, 3)
-                    ax = subplot(length(SET.stim_list), max(max_rep)+1, cnt_all);
+                    ax = nexttile;
                     imagesc(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).avg_projection(:,:,iRep))
                     axis equal tight off
                     cmap = zeros(1000,3); cmap(:,iStim) = linspace(0,1,1000)';
@@ -274,14 +286,26 @@ for iLayer = 1:length(SET.layers)
                     title(iRep)
                     cnt_all = cnt_all+1;
                 end%iRep
-                ax = subplot(length(SET.stim_list), max(max_rep)+1, cnt_all);
+                ax = nexttile;
                 imagesc(mean(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).avg_projection,3))
                 axis equal tight off
                 cmap = zeros(1000,3); cmap(:,iStim) = linspace(0,1,1000)';
                 colormap(ax, cmap)
                 title('avg avg')
-                cnt_all = cnt_all+1;
             end%iStim
+            % Also plot RGB overlay for each repetition
+            for iRep = 1:size(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).avg_projection, 3)
+                rgb = [];
+                for iStim = 1:length(SET.stim_list)
+                    img = PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).avg_projection(:,:,iRep);
+                    img=img-nanmin(img(:)); img=img/nanmax(img(:));
+                    rgb = cat(3,rgb, img);
+                end%iStim
+                ax = nexttile;
+                imagesc(rgb);
+                axis equal tight off
+            end%iRep
+
             % Save
             export_fig([curr.dir.animal, '04_Data_Summary\all_avg_reps_heatmaps'], '-pdf', '-painters')
             close(hFig)
@@ -298,7 +322,7 @@ for iLayer = 1:length(SET.layers)
             clim_all = [];
             for iStim = 1:length(SET.stim_list)
                 for iRep = 1:size(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).std_projection, 3)
-                    ax = subplot(length(SET.stim_list), max(max_rep)+1, cnt_all);
+                    ax = nexttile;
                     imagesc(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).std_projection(:,:,iRep))
                     axis equal tight off
                     cmap = zeros(1000,3); cmap(:,iStim) = linspace(0,1,1000)';
@@ -306,7 +330,7 @@ for iLayer = 1:length(SET.layers)
                     title(iRep)
                     cnt_all = cnt_all+1;
                 end%iRep
-                ax = subplot(length(SET.stim_list), max(max_rep)+1, cnt_all);
+                ax = nexttile;
                 imagesc(mean(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).std_projection,3))
                 axis equal tight off
                 cmap = zeros(1000,3); cmap(:,iStim) = linspace(0,1,1000)';
@@ -314,10 +338,21 @@ for iLayer = 1:length(SET.layers)
                 title('avg std')
                 cnt_all = cnt_all+1;
             end%iStim
+            % Also plot RGB overlay for each repetition
+            for iRep = 1:size(PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).std_projection, 3)
+                rgb = [];
+                for iStim = 1:length(SET.stim_list)
+                    img = PoolData.(SET.layers{iLayer}).(['Ani', sprintf('%02d', cnt_ani)]).(SET.stim_list{iStim}).std_projection(:,:,iRep);
+                    img=img-nanmin(img(:)); img=img/nanmax(img(:));
+                    rgb = cat(3,rgb, img);
+                end%iStim
+                ax = nexttile;
+                imagesc(rgb);
+                axis equal tight off
+            end%iRep
             % Save
             export_fig([curr.dir.animal, '04_Data_Summary\all_std_reps_heatmaps'], '-pdf', '-painters')
             close(hFig)
-            
 
             %% PCA space
             hFig = figure('Units','normalized','Position',[0.25 0.25 0.5 0.5],'Color','w');
@@ -329,7 +364,7 @@ for iLayer = 1:length(SET.layers)
                 dat_pca_boot = bootstrp(5000, @nanmean, all_avg_pca(ind,1:2));
                 % Get a 99%-confidence ellipse around the bootstrapped data
                 r_ellipse = Confocal_SubFcn.dataEllipse(dat_pca_boot, 0.99);
-                plot(r_ellipse(:,1), r_ellipse(:,2), 'Color', [0.251 0.251 0.251], 'LineWidth', 1)                
+                plot(r_ellipse(:,1), r_ellipse(:,2), 'Color', [0.251 0.251 0.251], 'LineWidth', 1)
                 subplot(1,2,2); hold on
                 plot(all_std_pca(ind,1), all_std_pca(ind,2), 'o', 'MarkerFaceColor', SET.Colors(iStim,:), 'MarkerEdgeColor','none', 'MarkerSize', 10)
                 % Add confidence ellipse
@@ -351,7 +386,6 @@ for iLayer = 1:length(SET.layers)
             title('std proje.')
             export_fig([curr.dir.animal, '04_Data_Summary\pca_space'], '-pdf', '-painters')
             close(hFig)
-
 
             %% Dendrogram
             % --- avg projection
@@ -477,7 +511,6 @@ for iLayer = 1:length(SET.layers)
         Stats.(SET.layers{iLayer}).within_across_avg.c] = Confocal_SubFcn.BootstrapHypothesisTesting('two-sample-pairs', w_avg, a_avg, Stats.n, Stats.seed, Stats.nComp);
     title(['p=', num2str(Stats.(SET.layers{iLayer}).within_across_avg.p)])
 
-
     % Within - std projection
     subplot(2,3,4); hold on
     dist_data = w_std;
@@ -551,37 +584,10 @@ for iLayer = 1:length(SET.layers)
         Stats.(SET.layers{iLayer}).within_across_std.s,...
         ~,...
         Stats.(SET.layers{iLayer}).within_across_std.c] = Confocal_SubFcn.BootstrapHypothesisTesting('two-sample-pairs', w_std, a_std, Stats.n, Stats.seed, Stats.nComp);
-    title(['p=', num2str(Stats.(SET.layers{iLayer}).within_across_std.p)])    
+    title(['p=', num2str(Stats.(SET.layers{iLayer}).within_across_std.p)])
     % Save
     export_fig(['ConfocalAnalysis_StaticResponse\',SET.layers{iLayer},'_population_response'], '-pdf', '-painters')
     close(hFig)
     save('ConfocalAnalysis_StaticResponse\StaticResponse_data.mat', 'PoolData', 'Stats')
 
 end%iLayer
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

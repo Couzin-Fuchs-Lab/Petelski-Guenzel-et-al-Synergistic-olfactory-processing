@@ -33,7 +33,7 @@
 % parameters (e.g., SV in the example above).
 %
 % Version:
-% 20-April-2023 (R2023a) Yannick Günzel
+% 20-April-2023 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -52,7 +52,7 @@ addpath(genpath('...\GitHub\export_fig'))
 %% Settings
 
 % Path to the data
-SET.BasePath = '...\Data\Behaviour\FourCageDecision\';
+SET.BasePath = '...';
 
 % Phases that should be analyzed
 SET.Phase = {'gregarious', 'solitarious'};

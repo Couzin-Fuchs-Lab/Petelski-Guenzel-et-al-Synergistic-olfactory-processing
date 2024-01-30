@@ -11,7 +11,7 @@
 % inforamtion).
 %
 % Version:
-% 20-April-2023 (R2023a) Yannick Günzel
+% 20-April-2023 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -61,7 +61,7 @@ SET.AngularLocBinning = 0:10:360;
 
 
 % ***** PATHS *****
-SET.BasePath = '...\Data\Behaviour\FourCageDecision\';
+SET.BasePath = '...';
 SET.Phase = {'gregarious', 'solitarious'};
 SET.Conditions.cages = {...
     'VpOpFp',... visual cues (see-through),   feeding

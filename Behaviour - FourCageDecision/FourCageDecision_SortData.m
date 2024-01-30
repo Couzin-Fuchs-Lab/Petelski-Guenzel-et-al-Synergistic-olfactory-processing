@@ -8,7 +8,7 @@
 %       'VpOmFp',... no olfactory cues (glass),   feeding
 %       'VpOmFm',... no olfactory cues (glass),   not feeding
 %  Version:
-%  10-Feb-2021 (R2020a) Yannick Günzel
+%  10-Feb-2021 (R2023a)
 
 clear all; close all; clc
 warning('off')

@@ -1,11 +1,11 @@
-%% Calcium Imaging Analysis Operator (manually annotate ROIs)
-% CIAO_02d_refineROI allows you to refine a previously created automatic 
-% segmentation or generate and refine your own.
+%% Calcium Imaging Analysis Operator (manually select ROIs)
+% CIAO_02b_selectROIs allows you add a manual selevtion regions of
+% interest.
 % We assume that there is a 03_Data_Processed folder within the main animal
 % folder that contains a mat-file for each stimulus, the meta_info.mat
 % file, and the img_segmentation.mat file.
 %
-% Version: 03-Mar-22 (R2022a)
+% Version: 03-Mar-22 (R2023a)
 
 %% Clean and prepare environment
 clc; clear all; close all
@@ -18,14 +18,9 @@ addpath(genpath(pwd))
 % Get path to raw data
 path2animal = uigetdir(pwd,'Select folder listing all animals');
 
-% The script CIAO_02c_autoROI defines an initial, overall ROI based on
-% hierachical clustering of respones. Set overwrite_auto to start the
-% selection process with drawing your own ROI. If set to false, you will
-% already start with refining the automatic classification.
-overwrite_auto = true;
 % If there is a refined version that you want to overwrite, set the
 % following variable to true, if it is set to false the previous selection
-% can be further refined. This will overwrite overwrite_auto.
+% can be further refined.
 overwrite_previous = false;
 
 % Get overview of animal folders
@@ -48,8 +43,8 @@ for iAni = 1:size(curr.dir.all,1)
         load([curr.path.segmentation,'meta_info.mat']);
 
         % Get image to click on.
-        img = mean(Segmentation.pocket_Corr_img,3);
-        img = cat(3, cat(3, img, zeros(size(Segmentation.pockets))), zeros(size(Segmentation.pockets)));
+        img = mean(Segmentation.summary_stats.pocket_Corr_img,3);
+        img = cat(3, cat(3, img, zeros(size(Segmentation.pockets_labeled))), zeros(size(Segmentation.pockets_labeled)));
 
         % Get brightfield
         BF = zeros(size(img,1),size(img,2), length(meta.unique_stim));
@@ -61,21 +56,19 @@ for iAni = 1:size(curr.dir.all,1)
             end%if isfile
         end%iStim
         % Get mx projection
-        BF = nanmax(BF,[],3); clear dat
+        BF = nanmean(BF,3); clear dat
         % --- Normalize
         BF = BF - nanmin(BF(:));
-        BF = sqrt(BF);
-        BF = BF - nanmean(BF(:));
-        BF = BF / nanstd(BF(:));
+        BF = log(sqrt(BF));
+        % BF = BF - nanmean(BF(:));
+        % BF = BF / nanstd(BF(:));
 
         % Check whether to overwrite or not
-        if ~overwrite_auto && ~overwrite_previous
-            img_label = Segmentation.autoROI;
-        elseif ~overwrite_previous
+        if ~overwrite_previous && isfield(Segmentation, 'manualROI')
             img_label = Segmentation.manualROI;
         else
             % --- Empty matrix to keep track of annotation
-            img_label = zeros(size(Segmentation.pockets,1), size(Segmentation.pockets,2));
+            img_label = zeros(size(Segmentation.pockets_labeled,1), size(Segmentation.pockets_labeled,2));
             % Get coarse selection
             hFig2 = figure('units', 'normalized', 'Position', [0.15 0.15 0.7 0.7]);
             set(gcf, 'name', curr.dir.all(iAni).name)
@@ -98,7 +91,7 @@ for iAni = 1:size(curr.dir.all,1)
             end
             img(:,:,3) = img_label;
             close(hFig2)
-        end
+        end%if overwrite
         img(:,:,3) = img_label;
 
         figure(hFig); clf; set(gcf, 'name', curr.dir.all(iAni).name)
@@ -147,7 +140,7 @@ for iAni = 1:size(curr.dir.all,1)
             % Update figure
             figure(hFig)
             clf
-            
+
             subplot(1,2,1)
             imagesc(BF); hold on
             [B, L] = bwboundaries(img_label>0);
@@ -156,7 +149,7 @@ for iAni = 1:size(curr.dir.all,1)
                 plot(boundary(:, 2), boundary(:, 1), 'w:', 'LineWidth', 1)
             end%k
             axis equal off
-            
+
             subplot(1,2,2)
             imagesc(img); hold on
             [B, L] = bwboundaries(img_label>0);

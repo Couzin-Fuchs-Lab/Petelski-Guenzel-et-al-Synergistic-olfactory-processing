@@ -13,7 +13,8 @@
 %     A123,1
 %
 %
-% Version: 03-Mar-23 (R2022a)
+% Version: 03-Mar-23 (R2023a)
+
 % Add paths:
 % --- Current folder and subfolders
 addpath(genpath(pwd))
@@ -44,7 +45,8 @@ for iAni = 1:size(curr.dir.all,1)
         idx_start = strfind(curr.dir.all(iAni).name, 'Animal')+length('Animal');
         idx_stop = strfind(curr.dir.all(iAni).name, '_');
         idx_stop = idx_stop(find(idx_stop > idx_start,1))-1;
-        curr.animal = curr.dir.all(iAni).name(idx_start:idx_stop);
+        curr.animal = str2double(curr.dir.all(iAni).name(idx_start:idx_stop));
+        curr.animal = sprintf('%03d',curr.animal);
 
         % Load meta
         curr.path.data = [SET.path2animal,'\',curr.dir.all(iAni).name,'\02_Data_Matlab\'];

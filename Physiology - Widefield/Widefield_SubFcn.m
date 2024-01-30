@@ -1,8 +1,4 @@
 classdef Widefield_SubFcn
-    %FourCageDecision_SubFcn Cointains subfunctions for cage analysis.
-    % Detailed explanation goes here ...
-    % Version:
-    % 17-Mar-2021 (R2020a) Yannick Günzel
 
     properties
     end

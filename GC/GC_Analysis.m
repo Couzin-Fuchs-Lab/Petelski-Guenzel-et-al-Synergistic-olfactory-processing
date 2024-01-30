@@ -1,8 +1,9 @@
 %% GC_Analysis
-% ...
+% This script visualizes the GC-MS results of the blackberry leaf
+% headspace.
 %
 % Version:
-% 06-June-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -17,7 +18,7 @@ mkdir('Output')
 %% Settings
 
 % Set paths
-SET.main_path = '...\Data\GC\';
+SET.main_path = '...';
 SET.files = {'CHROMATOGRAM_berryleaves.txt'; 'CHROMATOGRAM_zhae.txt'};
 SET.x_range = [2, 19]; %{s]
 

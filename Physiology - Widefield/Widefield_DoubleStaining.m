@@ -1,7 +1,8 @@
 %% Widefield_DoubleStaining
+% This script loads the anatomical double staining data to visualize it.
 %
 % Version:
-% 24-July-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -10,14 +11,14 @@ warning('off')
 % Add toolboxes
 % A MATLAB toolbox for exporting publication quality figures
 % (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+addpath(genpath('...\export_fig'))
 
 %% Settings
 
 % Set base path to find the data
 SET.Stack_path = {...
-    '...\Data\Anatomy\solitarious\BIC\220909_soli_PN_ORN\';...
-    '...\Data\Anatomy\solitarious\BIC\220915_soli_PN_ORN\'};
+    '...\220909_soli_PN_ORN\';...
+    '...\220915_soli_PN_ORN\'};
 
 % Set names of folders that contain individual tiff Stacks for each channel
 SET.Stack_chan = {'tiff_C1'; 'tiff_C2'};
@@ -43,7 +44,6 @@ SET.VoxelSize(:,2) = SET.VoxelSize(:,2)*(SET.OriginalSize(2)/SET.TargetSize(2));
 
 % Number of sub-Stacks (mini max-projections)
 SET.SubStackSteps = 11;
-
 
 %% Pool images
 
@@ -273,27 +273,7 @@ for iStack = 1:length(SET.Stack_path)
     end%while
     save([SET.Stack_path{iStack},'PN_loc.mat'], 'locMax')
 
-    %%
-
-    % Clean
+    %% Clean
     clearvars -except iStack SET
 
 end%iStack
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

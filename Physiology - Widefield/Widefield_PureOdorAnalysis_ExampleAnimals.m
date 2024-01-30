@@ -1,8 +1,10 @@
 %% PureOdorAnalysis_ExampleAnimals
-% ...
+% This script analyzes two exemplary animals, one gregarious and one
+% solitarious animals. It produces heatmap % (s.d. projection and mean 
+% intensity projection) and time course figures % for each stimulus.
 %
 % Version:
-% 24-April-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -11,17 +13,17 @@ warning('off')
 % Add toolboxes
 % A MATLAB toolbox for exporting publication quality figures
 % (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+addpath(genpath('...\export_fig'))
 mkdir('PureOdorAnalysis_ExampleAnimals')
 
 %% Settings
 
 % Provide a list of example animals (selected based on BF)
 SET.example_animals.gregarious = {...
-    '...\Data\Physiology\Cal520_Widefield\COL_HEX3_MOL_N2_OC3L2_ZHAE2\gregarious\220708_Animal066_greg_socialmodulation\'};
+    '...\gregarious\220708_Animal066_greg_socialmodulation\'};
 
 SET.example_animals.solitarious = {...
-    '...\Data\Physiology\Cal520_Widefield\COL_HEX3_MOL_N2_OC3L2_ZHAE2\solitarious\220509_Animal030_soli_socialmodulation\'};
+    '...\solitarious\220509_Animal030_soli_socialmodulation\'};
 
 % Give list of phases
 SET.phases = {'gregarious'; 'solitarious'};
@@ -186,15 +188,3 @@ for iPhase = 1:length(SET.phases)
         clearvars -except SET iAni iPhase
     end%iAni
 end%iPhase
-
-
-
-
-
-
-
-
-
-
-
-

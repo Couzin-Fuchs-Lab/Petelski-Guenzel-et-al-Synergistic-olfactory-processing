@@ -1,8 +1,10 @@
 %% Widefield_BerryLeafAnalysis_Population
-% ...
+% This script pools the data across all animals for both social phenotypes.
+% It plots the respective activity time courses with corresponding 
+% swarm/violin plots.
 %
 % Version:
-% 2-April-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -11,13 +13,13 @@ warning('off')
 % Add toolboxes
 % A MATLAB toolbox for exporting publication quality figures
 % (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+addpath(genpath('...\export_fig'))
 mkdir('BerryLeafAnalysis_Population')
 
 %% Settings
 
 % Set paths
-SET.main_path = '...\Data\Physiology\Cal520_Widefield\BERRYLEAF_COL_MOL_N2_ZHAE2\';
+SET.main_path = '...';
 
 % Seth the two phases
 SET.phases = {'gregarious', 'solitarious'};
@@ -58,7 +60,6 @@ SET.TC_lim_swarm = [-0.25 3];
 % to greate three main plots: a raster plot showing all TCs as an image,
 % the resulting average TCs, and violin/swarm plots for the avg. activity
 % in the active window
-
 
 % Iterate over both phases
 for iPhase = 1:length(SET.phases)
@@ -321,32 +322,3 @@ end%iStim
 
 % Save
 save(['BerryLeafAnalysis_Population', '\', 'statistics.mat'], 'Stats')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

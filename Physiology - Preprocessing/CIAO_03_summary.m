@@ -25,7 +25,7 @@
 %   |  |  |--> Trial##           : same logic for all following trials
 %   |--> Animal##                : same locic for all following animals
 %
-% Version: 16-Oct-22 (R2022a)
+% Version: 16-Oct-22 (R2023a)
 
 %% Clean and prepare environment
 clc; clear all; close all
@@ -36,9 +36,12 @@ disp('----- Ciao, welcome back! -----')
 addpath(genpath(pwd))
 
 % Add toolboxes
-% A MATLAB toolbox for exporting publication quality figures
-% (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+% --- A MATLAB toolbox for exporting publication quality figures
+%     (https://github.com/altmany/export_fig)
+addpath(genpath('...\export_fig'))
+% --- Toolbox for nice colors
+%     https://github.com/DrosteEffect/BrewerMap
+addpath(genpath('...\BrewerMap'))
 
 %% Settings
 
@@ -62,15 +65,8 @@ currSET.StimRegionList = [];
 % Get path to raw data
 path2animal = uigetdir(pwd,'Select folder listing all animals');
 
-% Check whether it is gregarious or solitarious
-if contains(path2animal, 'gregarious')
-    currSET.colMap = SubFcn.ColMapPlasma(1000);
-elseif contains(path2animal, 'solitarious')
-    currSET.colMap = SubFcn.ColMapPlasma(1000);
-    currSET.colMap = [currSET.colMap(:,2), currSET.colMap(:,1), currSET.colMap(:,3)];
-else
-    currSET.colMap = gray(1000);
-end
+% Set colormap
+currSET.colMap = flipud(brewermap(1000,'RdBu'));
 
 % Get overview of animal folders
 curr.dir.all = dir(path2animal);
@@ -83,6 +79,7 @@ hFig_pool = figure('Units','normalized','Color','w', 'Position', [0 0 0.5 0.5]);
 PooledData.StimList = {};
 
 % Iterate over all animals
+cnt_ani = 0;
 for iAni = 1:size(curr.dir.all,1)
 
     % Check whether this is what we are looking for, i.e. whether the
@@ -91,6 +88,7 @@ for iAni = 1:size(curr.dir.all,1)
 
         % Check whether to run preprocessing or not
         if currSET.overwrite || ~isfolder([path2animal,'\',curr.dir.all(iAni).name,'\04_Data_Summary'])
+            cnt_ani = cnt_ani + 1;
 
             % Get information about trials
             curr.path.data = [path2animal,'\',curr.dir.all(iAni).name,'\03_Data_Processed'];
@@ -196,28 +194,24 @@ for iAni = 1:size(curr.dir.all,1)
                     Summary.data.(unique_stimuli{iStim}).t = linspace(0, length(Summary.data.(unique_stimuli{iStim}).TC)/currSET.fps, length(Summary.data.(unique_stimuli{iStim}).TC));
 
                     % Get the average activity
-                    Summary.data.(unique_stimuli{iStim}).avg_val = mean(Summary.data.(unique_stimuli{iStim}).TC(meta.activeRegion));
+                    Summary.data.(unique_stimuli{iStim}).avg_val = mean(Summary.data.(unique_stimuli{iStim}).TC);
 
                     % Get the mean and std-projection
-                    Summary.data.(unique_stimuli{iStim}).img_avg = nanmean(Summary.data.(unique_stimuli{iStim}).ImageStream(:,:,meta.activeRegion), 3);
+                    Summary.data.(unique_stimuli{iStim}).img_avg = nanmean(Summary.data.(unique_stimuli{iStim}).ImageStream, 3);
                     Summary.data.(unique_stimuli{iStim}).img_std = nanstd(Summary.data.(unique_stimuli{iStim}).ImageStream, [], 3);
 
                     % Plot result
                     figure(hFig_overview)
                     % --- avg image
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*0)
-                    imagesc(Summary.data.(unique_stimuli{iStim}).img_avg); axis equal off; colormap(currSET.colMap)
+                    ax = subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*0);
+                    imagesc(Summary.data.(unique_stimuli{iStim}).img_avg); axis equal off; colormap(ax, currSET.colMap)
                     title(['avg = ', num2str(round(Summary.data.(unique_stimuli{iStim}).avg_val,2)),'%'])
                     % --- std image
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*1)
-                    imagesc(Summary.data.(unique_stimuli{iStim}).img_std); axis equal off; colormap(currSET.colMap)
-                    title('std')
-                    % --- zscore image
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*2)
-                    imagesc(Segmentation.pocket_Zscore_img(:,:,iStim)); axis equal off; colormap(currSET.colMap)
-                    title('zscores')
+                    ax = subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*1);
+                    imagesc(Summary.data.(unique_stimuli{iStim}).img_std); axis equal off; colormap(ax, gray(1000))
+                    title('std')                    
                     % --- TC
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*3)
+                    subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*2)
                     plot(Summary.data.(unique_stimuli{iStim}).t, Summary.data.(unique_stimuli{iStim}).TC, 'LineWidth', 2, 'Color',	cols(iStim,:))
                     xlim([Summary.data.(unique_stimuli{iStim}).t(1), Summary.data.(unique_stimuli{iStim}).t(end)])
                     title(unique_stimuli{iStim}, 'interpreter', 'none')
@@ -238,12 +232,9 @@ for iAni = 1:size(curr.dir.all,1)
                     if ~isfield(PooledData, unique_stimuli{iStim})
                         % Keep track of stimuli
                         PooledData.StimList{length(PooledData.StimList)+1, 1} = unique_stimuli{iStim};
-                        PooledData.(unique_stimuli{iStim}) = [];
+                        PooledData.(unique_stimuli{iStim}) = nan(size(curr.dir.all,1),1);
                     end% if field alreday exists
-                    PooledData.(unique_stimuli{iStim}) = [...
-                        PooledData.(unique_stimuli{iStim});...
-                        Summary.data.(unique_stimuli{iStim}).avg_val
-                        ];
+                    PooledData.(unique_stimuli{iStim})(cnt_ani,1) = Summary.data.(unique_stimuli{iStim}).avg_val;
                 end%iStim
 
                 % Correct plots
@@ -251,8 +242,8 @@ for iAni = 1:size(curr.dir.all,1)
                 for iStim = 1:length(unique_stimuli)
 
                     % --- avg
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*0); hold on
-                    caxis([min(val_range.img_avg(:,1)), max(val_range.img_avg(:,2))])
+                    subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*0); hold on
+                    clim([-max(abs(val_range.img_avg(:))) max(abs(val_range.img_avg(:)))])
                     % Draw AL outlines
                     [B, L] = bwboundaries(Segmentation.manualROI>0);
                     for k = 1:length(B)
@@ -267,7 +258,7 @@ for iAni = 1:size(curr.dir.all,1)
                     end%k
                     clear k B L  boundary
                     % --- std
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*1); hold on
+                    subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*1); hold on
                     caxis([min(val_range.img_std(:,1)), max(val_range.img_std(:,2))])
                     % Draw AL outlines
                     [B, L] = bwboundaries(Segmentation.manualROI>0);
@@ -282,52 +273,27 @@ for iAni = 1:size(curr.dir.all,1)
                         plot(boundary(:, 2), boundary(:, 1), 'w', 'LineWidth', 1)
                     end%k
                     clear k B L  boundary
-                    % --- zscore
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*2); hold on
-                    caxis([quantile(Segmentation.pocket_Zscore_img(:),0.001)-1e-6, quantile(Segmentation.pocket_Zscore_img(:),0.999)+1e-6])
-                    % Draw AL outlines
-                    [B, L] = bwboundaries(Segmentation.manualROI>0);
-                    for k = 1:length(B)
-                        boundary = B{k};
-                        plot(boundary(:, 2), boundary(:, 1), 'w:', 'LineWidth', 1)
-                    end%k
-                    % Draw area outlines
-                    [B, L] = bwboundaries(Mask>0);
-                    for k = 1:length(B)
-                        boundary = B{k};
-                        plot(boundary(:, 2), boundary(:, 1), 'w', 'LineWidth', 1)
-                    end%k
-                    clear k B L  boundary
                     % --- TC
-                    subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*3); hold on
-                    plot([Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(1)) Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(1))], [min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)],'k')
-                    plot([Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(end)) Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(end))], [min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)],'k')
+                    subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*2); hold on
                     ylim([min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)])
                 end%iStim
                 % Add colorbars
                 % --- avg
-                subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*0);
+                subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*0);
                 pos = get(gca, 'Position');
                 colorbar
                 set(gca, 'Position',  pos)
                 % --- std
-                subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*1);
+                subplot(3,length(unique_stimuli), iStim+length(unique_stimuli)*1);
                 pos = get(gca, 'Position');
                 colorbar
-                set(gca, 'Position',  pos)
-                % --- zscore
-                subplot(4,length(unique_stimuli), iStim+length(unique_stimuli)*2);
-                pos = get(gca, 'Position');
-                colorbar
-                set(gca, 'Position',  pos)
+                set(gca, 'Position',  pos)                
                 % Save image
                 export_fig([curr.path.save, '\', curr.dir.all(iAni).name, '_overview'], '-pdf', '-painters')
 
                 figure(hFig_pool)
                 % --- TC
                 subplot(2,2,[1 2]); hold on
-                plot([Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(1)) Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(1))], [min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)],'k')
-                plot([Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(end)) Summary.data.(unique_stimuli{iStim}).t(meta.activeRegion(end))], [min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)],'k')
                 ylim([min(floor(val_range.tc(:,1) * 4) / 4), max(ceil(val_range.tc(:,2) * 4) / 4)])
                 xlim([Summary.data.(unique_stimuli{iStim}).t(1), Summary.data.(unique_stimuli{iStim}).t(end)])
                 legend(unique_stimuli, 'Location', 'eastoutside', 'Interpreter','none')
@@ -336,7 +302,7 @@ for iAni = 1:size(curr.dir.all,1)
                 ylabel('\DeltaF/F (%)')
                 % --- avg std
                 subplot(2,2,3); hold on
-                imagesc(nanmean(poolStd,3)); axis equal off; colormap(currSET.colMap);
+                imagesc(nanmean(poolStd,3)); axis equal off;
                 caxis([nanmin([quantile(poolStd(:),0.01),-1e-6]), nanmax([quantile(poolStd(:),0.99),+1e-6])]); clear poolStd
                 title('average std-projection')
                 % Draw AL outlines
@@ -354,10 +320,11 @@ for iAni = 1:size(curr.dir.all,1)
                 set(gca, 'YDir', 'reverse')
                 % --- avg in z score
                 subplot(2,2,4); hold on
-                temp = nanmean(Segmentation.pocket_Zscore_img,3);
-                imagesc(temp); axis equal off; colormap(currSET.colMap)
-                caxis([nanmin([quantile(temp(:),0.001),-1e-6]), nanmax([quantile(temp(:),0.999),+1e-6])]); clear temp
-                title('avg zscore')
+                temp = Segmentation.summary_stats.pocket_Corr_img;
+                imagesc(temp); axis equal off; 
+                colormap gray
+                clim([-1 1]); clear temp
+                title('corr')
                 % Draw AL outlines
                 [B, L] = bwboundaries(Segmentation.manualROI>0);
                 for k = 1:length(B)
@@ -389,38 +356,38 @@ for iAni = 1:size(curr.dir.all,1)
     end%if animal folder
 end%iAni
 
-% Plot pooled results across all stimuli
-hFig_poolAll = figure('Units','normalized','Color','w', 'Position', [0 0 0.5 0.5]); hold on
-cols = turbo(length(PooledData.StimList));
-Sample = [];
-for iStim = 1:length(PooledData.StimList)
-    % Get data
-    BeeData = PooledData.(PooledData.StimList{iStim});
-    % Properties for swarm plot
-    properties.MarkerType =         'o';                 %(Marker type)
-    properties.MarkerFaceColor =    cols(iStim,:);       %(Marker face color)
-    properties.MarkerSize =         5;                   %(Marker size)
-    % Plot results
-    if length(BeeData)>1
-        % Swarm plot
-        SubFcn.beeswarmplot_advanced(BeeData, iStim, 0.75, properties)
-        % Avg and CI
-        avg = mean(bootstrp(5000, @nanmean, BeeData));
-        CI = bootci(5000, {@nanmean, BeeData});
-        plot([iStim iStim]+[-0.4 0.4], [avg avg], 'k', 'LineWidth', 2)
-        plot([iStim iStim], CI, 'k', 'LineWidth', 2)
-    else
-        plot(iStim, BeeData, 'o', 'MarkerFaceColor', cols(iStim,:), 'MarkerEdgeColor', 'none')
-        plot([iStim iStim]+[-0.4 0.4],[BeeData BeeData],'k', 'LineWidth', 2)
-    end
-
-end%iStim
-% Cosmetics
-set(gca, 'XTick', 1:length(PooledData.StimList), 'XTickLabel', PooledData.StimList, 'TickLabelInterpreter', 'none')
-ylabel('\DeltaF/F (%)')
-xlabel('stimulus')
-title(path2animal)
-export_fig([path2animal, 'PooledData'], '-pdf', '-painters')
+% % Plot pooled results across all stimuli
+% hFig_poolAll = figure('Units','normalized','Color','w', 'Position', [0 0 0.5 0.5]); hold on
+% cols = turbo(length(PooledData.StimList));
+% Sample = [];
+% for iStim = 1:length(PooledData.StimList)
+%     % Get data
+%     BeeData = PooledData.(PooledData.StimList{iStim});
+%     % Properties for swarm plot
+%     properties.MarkerType =         'o';                 %(Marker type)
+%     properties.MarkerFaceColor =    cols(iStim,:);       %(Marker face color)
+%     properties.MarkerSize =         5;                   %(Marker size)
+%     % Plot results
+%     if length(BeeData)>1
+%         % Swarm plot
+%         SubFcn.beeswarmplot_advanced(BeeData, iStim, 0.75, properties)
+%         % Avg and CI
+%         avg = nanmean(bootstrp(5000, @nanmean, BeeData));
+%         CI = bootci(5000, {@nanmean, BeeData});
+%         plot([iStim iStim]+[-0.4 0.4], [avg avg], 'k', 'LineWidth', 2)
+%         plot([iStim iStim], CI, 'k', 'LineWidth', 2)
+%     else
+%         plot(iStim, BeeData, 'o', 'MarkerFaceColor', cols(iStim,:), 'MarkerEdgeColor', 'none')
+%         plot([iStim iStim]+[-0.4 0.4],[BeeData BeeData],'k', 'LineWidth', 2)
+%     end
+% 
+% end%iStim
+% % Cosmetics
+% set(gca, 'XTick', 1:length(PooledData.StimList), 'XTickLabel', PooledData.StimList, 'TickLabelInterpreter', 'none')
+% ylabel('\DeltaF/F (%)')
+% xlabel('stimulus')
+% title(path2animal)
+% export_fig([path2animal, 'PooledData'], '-pdf', '-painters')
 
 % Save
 save([path2animal, 'PooledData.mat'], 'PooledData')

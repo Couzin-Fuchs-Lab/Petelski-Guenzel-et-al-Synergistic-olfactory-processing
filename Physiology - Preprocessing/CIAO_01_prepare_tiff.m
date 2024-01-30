@@ -25,7 +25,7 @@
 %   |  |  |--> Trial##           : same logic for all following trials
 %   |--> Animal##                : same locic for all following animals
 %
-% Version: 03-Mar-23 (R2022a)
+% Version: 03-Mar-23 (R2023a)
 
 %% Clean and prepare environment
 clc; close all

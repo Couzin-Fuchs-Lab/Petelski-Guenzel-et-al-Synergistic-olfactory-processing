@@ -1,8 +1,10 @@
 %% Widefield_PureOdorAnalysis_Population
-% ...
+% This script pools the data across all animals for both social phenotypes.
+% It plots the respective activity time courses with corresponding 
+% swarm/violin plots.
 %
 % Version:
-% 11-May-2023 (R2023a) Yannick Günzel
+% 05-Jan-2024 (R2023a)
 
 % Prepare
 clc; clear all; close all
@@ -11,13 +13,13 @@ warning('off')
 % Add toolboxes
 % A MATLAB toolbox for exporting publication quality figures
 % (https://github.com/altmany/export_fig)
-addpath(genpath('...\GitHub\export_fig'))
+addpath(genpath('...\export_fig'))
 mkdir('PureOdorAnalysis_Population')
 
 %% Settings
 
 % Set paths
-SET.main_path = '...\Data\Physiology\Cal520_Widefield\COL_HEX3_MOL_N2_OC3L2_ZHAE2\';
+SET.main_path = '...';
 
 % Seth the two phases
 SET.phases = {'gregarious', 'solitarious'};
@@ -358,32 +360,3 @@ end%iStim
 
 % Save
 save(['PureOdorAnalysis_Population', '\', 'statistics.mat'], 'Stats')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
