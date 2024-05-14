@@ -6,3 +6,8 @@ Desert locust plagues threaten the food security of millions. Central to their f
 
 ## About
 The analysis was done in MATLAB and divided into behavioral and calcium imaging data sets. To run the code, paths to GitHub repositories and  data folders must be adjusted.
+
+## Cite as
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11190014.svg)](https://doi.org/10.5281/zenodo.11190014)
+
+
