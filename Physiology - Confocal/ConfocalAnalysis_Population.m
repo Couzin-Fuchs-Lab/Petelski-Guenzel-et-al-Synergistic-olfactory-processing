@@ -750,9 +750,21 @@ Stats.prop_n_regions.nComp = 1;
 for iStim  = 1:length(avg_greg)
     % --- greg
     rectangle('Position', [iStim-0.25, 0, 0.25, avg_greg(iStim)], 'FaceColor', [191 0 0]/255, 'EdgeColor', 'none')
+    % Swarm
+    beeData = PooledData.gregarious.layer01_top.StimCombiList6.poolPropRegions(:,iStim);
+    properties.MarkerType = 'o';
+    properties.MarkerFaceColor = [0.21 0.21 0.21];
+    properties.MarkerSize = 5;
+    Confocal_SubFcn.beeswarmplot_advanced(beeData, iStim-0.125, 0.125, properties)
     plot([1 1]*(iStim-0.25/2), ci_greg(:,iStim), 'k')
     % --- soli
     rectangle('Position', [iStim, 0, 0.25, avg_soli(iStim)], 'FaceColor', [0 0 191]/255, 'EdgeColor', 'none')
+    % Swarm
+    beeData = PooledData.solitarious.layer01_top.StimCombiList6.poolPropRegions(:,iStim);
+    properties.MarkerType = 'o';
+    properties.MarkerFaceColor = [0.21 0.21 0.21];
+    properties.MarkerSize = 5;
+    Confocal_SubFcn.beeswarmplot_advanced(beeData, iStim+0.125, 0.125, properties)
     plot([1 1]*(iStim+0.25/2), ci_soli(:,iStim), 'k')
     % Stats
     [...
@@ -767,7 +779,7 @@ for iStim  = 1:length(avg_greg)
         Stats.prop_n_regions.seed,...
         Stats.prop_n_regions.nComp);
 end%iStim
-ylim([0 0.25])
+ylim([0 0.3])
 xlim([0.5 length(avg_greg)+0.5])
 xticks(1:length(avg_greg))
 export_fig('ConfocalAnalysis_Population\prop_n_regions', '-pdf', '-painters')
@@ -814,10 +826,20 @@ hFig = figure('Color','w', 'Units','normalized', 'Position',[0 0 0.5 0.5]);
 hold on
 for iStim  = 1:length(avg_greg)
     % --- greg
-    rectangle('Position', [iStim-0.25, 0, 0.25, avg_greg(iStim)], 'FaceColor', [191 0 0]/255, 'EdgeColor', 'none')
+    rectangle('Position', [iStim-0.25, 0, 0.25, avg_greg(iStim)], 'FaceColor', [191 0 0]/255, 'EdgeColor', 'none')    
+    beeData = greg{iStim};
+    properties.MarkerType = 'o';
+    properties.MarkerFaceColor = [0.21 0.21 0.21];
+    properties.MarkerSize = 5;
+    Confocal_SubFcn.beeswarmplot_advanced(beeData, iStim-0.125, 0.125, properties)
     plot([1 1]*(iStim-0.25/2), ci_greg(:,iStim), 'k')
     % --- soli
     rectangle('Position', [iStim, 0, 0.25, avg_soli(iStim)], 'FaceColor', [0 0 191]/255, 'EdgeColor', 'none')
+    beeData = soli{iStim};
+    properties.MarkerType = 'o';
+    properties.MarkerFaceColor = [0.21 0.21 0.21];
+    properties.MarkerSize = 5;
+    Confocal_SubFcn.beeswarmplot_advanced(beeData, iStim+0.125, 0.125, properties)
     plot([1 1]*(iStim+0.25/2), ci_soli(:,iStim), 'k')
     % Stats
     [...
@@ -833,7 +855,7 @@ for iStim  = 1:length(avg_greg)
         Stats.prop_mix_regions.nComp);
 end%iStim
 set(gca, 'XTick', 1:length(avg_greg), 'XTickLabel', {'Laa Lct', 'Oct Lct', 'Z3hl Laa', 'Oct Laa'})
-ylim([0 0.2])
+ylim([0 0.5])
 xlim([0.5 length(avg_greg)+0.5])
 export_fig('ConfocalAnalysis_Population\prop_mix_regions', '-pdf', '-painters')
 close(hFig)

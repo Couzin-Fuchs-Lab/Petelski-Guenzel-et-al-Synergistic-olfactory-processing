@@ -872,7 +872,7 @@ clearvars -except OdorSpace SET
 % Show how the clusters are different from each other (response vectors)
 
 % Set the ylim (zscored)
-ylim_range = [-5 15];
+ylim_range = [-10 30];
 
 % Only layer 1
 iLayer = 1;
@@ -922,14 +922,15 @@ for iC = 1:OdorSpace.(SET.layers{iLayer}).RespVec.best_k
         else
             pos = [iStim-0.5 avg(iStim) 1 abs(avg(iStim))];
         end
-        % Check whether zero lies withing the CI
-        if sum(ci(:,iStim)>0)==2
-            rectangle('position', pos, 'EdgeColor', 'none', 'FaceColor', [1 0 1])
-        elseif sum(ci(:,iStim)<0)==2
-            rectangle('position', pos, 'EdgeColor', 'none', 'FaceColor', [0 1 1])
-        else
-            rectangle('position', pos, 'EdgeColor', 'none', 'FaceColor', [0.5 0.5 0.5])
-        end
+        rectangle('position', pos, 'EdgeColor', 'none', 'FaceColor', [0.5 0.5 0.5])
+
+        % Swarm
+        beeData = resp_vec(:,iStim);
+        properties.MarkerType = 'o';
+        properties.MarkerFaceColor = [0.21 0.21 0.21];
+        properties.MarkerSize = 5;
+        Confocal_SubFcn.beeswarmplot_advanced(beeData, iStim, 0.25, properties)
+
         % Plot CI
         plot([iStim iStim],ci(:,iStim),'k')
         % Add info on stats
